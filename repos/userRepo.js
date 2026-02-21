@@ -13,4 +13,16 @@ async function createUser({ id, email, password_hash, display_name }) {
   return { id, email, display_name };
 }
 
-module.exports = { findByEmail, createUser };
+async function updatePassword(email, password_hash) {
+  const [result] = await pool.query(
+    'UPDATE users SET password_hash = ? WHERE email = ?',
+    [password_hash, email]
+  );
+  return result.affectedRows > 0;
+}
+
+module.exports = { 
+  findByEmail, 
+  createUser, 
+  updatePassword
+};

@@ -19,8 +19,21 @@ async function login({ email, password }) {
   return { token, user: { id: user.id, display_name: user.display_name } };
 }
 
+async function resetPassword({ email, newPassword }) {
+  const user = await userRepo.findByEmail(email);
+  if (!user) throw new Error('user_not_found');
+
+  const hash = await bcrypt.hash(newPassword, 10);
+  return await userRepo.updatePassword(email, hash);
+}
+
 function verifyToken(token) {
   try { return jwt.verify(token, process.env.JWT_SECRET); } catch { return null; }
 }
 
-module.exports = { register, login, verifyToken };
+module.exports = { 
+  register, 
+  login, 
+  verifyToken, 
+  resetPassword 
+};

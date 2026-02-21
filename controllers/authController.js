@@ -18,4 +18,18 @@ async function login(req, res) {
   }
 }
 
-module.exports = { register, login };
+async function resetPassword(req, res) {
+  try {
+    const success = await authService.resetPassword(req.body);
+    res.json({ success, message: 'password_updated' });
+  } catch (e) {
+    const status = e.message === 'user_not_found' ? 404 : 400;
+    res.status(status).json({ error: e.message });
+  }
+}
+
+module.exports = { 
+  register, 
+  login, 
+  resetPassword 
+};

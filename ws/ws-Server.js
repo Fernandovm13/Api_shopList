@@ -1,15 +1,14 @@
 const WebSocket = require('ws');
-const crypto = require('crypto'); // Usando el módulo nativo para evitar errores de versión
+const crypto = require('crypto'); 
 const itemRepo = require('../repos/itemRepo');
-const listRepo = require('../repos/listRepo'); // Añadido para verificar permisos
+const listRepo = require('../repos/listRepo'); 
 const { verifyToken } = require('../services/authService');
 
 function startWSS(server) {
   const wss = new WebSocket.Server({ server });
-  const subscriptions = new Map(); // listId -> Set(ws)
+  const subscriptions = new Map(); 
 
   wss.on('connection', async (ws, req) => {
-    // Extraer y verificar el token de la URL
     const token = new URL(req.url, 'http://h').searchParams.get('token');
     const user = verifyToken(token);
     
@@ -23,7 +22,6 @@ function startWSS(server) {
       try {
         const { type, payload } = JSON.parse(data);
 
-        // 1. Suscribirse a una lista (Validando que sea colaborador)
         if (type === 'subscribe') {
           const canAccess = await listRepo.isCollaborator(payload.listId, ws.userId);
           if (!canAccess) {
@@ -39,10 +37,9 @@ function startWSS(server) {
           console.log(`Usuario ${ws.userId} suscrito a lista: ${payload.listId}`);
         }
 
-        // 2. Crear ítem (Sincronizado con base de datos y broadcast)
         if (type === 'create_item') {
           const item = await itemRepo.insertItem({ 
-            id: crypto.randomUUID(), // Uso de crypto nativo
+            id: crypto.randomUUID(), 
             listId: payload.listId, 
             ...payload, 
             created_by: ws.userId 
@@ -51,7 +48,6 @@ function startWSS(server) {
           broadcast(payload.listId, { type: 'item_created', item });
         }
 
-        // 3. Actualizar ítem (Manejo de estados: Pendiente/Completado)
         if (type === 'update_item') {
           const ok = await itemRepo.updateItem(payload.id, payload.changes, payload.version);
           if (ok) {
@@ -71,7 +67,6 @@ function startWSS(server) {
     });
   });
 
-  // Función para notificar a todos los dispositivos conectados a una misma lista
   function broadcast(listId, msg) {
     const clients = subscriptions.get(listId);
     if (clients) {
