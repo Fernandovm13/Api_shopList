@@ -59,4 +59,48 @@ async function addItem(req, res) {
   }
 }
 
-module.exports = { getUserLists, createList, invite, getItems, addItem };
+async function updateList(req, res) {
+  try {
+    const success = await listRepo.updateList(req.params.id, req.body.name);
+    if (success) res.json({ message: 'Lista actualizada correctamente' });
+    else res.status(404).json({ error: 'Lista no encontrada' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
+
+async function deleteList(req, res) {
+  try {
+    const success = await listRepo.deleteList(req.params.id);
+    if (success) res.json({ message: 'Lista eliminada' });
+    else res.status(404).json({ error: 'Lista no encontrada' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
+
+async function updateItem(req, res) {
+  try {
+    const { title, quantity, note, version } = req.body;
+    const success = await itemRepo.updateItem(
+      req.params.id, 
+      { title, quantity, note }, 
+      version || 0
+    );
+    if (success) res.json({ message: 'Item actualizado correctamente' });
+    else res.status(409).json({ error: 'Error de versión o item no encontrado' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
+
+module.exports = { 
+  getUserLists, 
+  createList, 
+  invite, 
+  getItems, 
+  addItem, 
+  updateList, 
+  deleteList, 
+  updateItem 
+};

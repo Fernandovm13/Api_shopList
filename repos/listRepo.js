@@ -17,11 +17,43 @@ async function isCollaborator(listId, userId) {
 
 async function getListsByUser(userId) {
   const [rows] = await pool.query(
-    `SELECT l.* FROM pantry_lists l 
-     JOIN list_collaborators lc ON l.id = lc.list_id 
-     WHERE lc.user_id = ?`, [userId]
+    `SELECT 
+        l.*, 
+        COUNT(i.id) AS total_items,
+        SUM(CASE WHEN i.status = 'completed' AND i.deleted = 0 THEN 1 ELSE 0 END) AS completed_items,
+        /* Usamos created_at de la lista y comparamos con la última actividad de sus items */
+        GREATEST(
+            l.created_at, 
+            IFNULL((SELECT MAX(updated_at) FROM items WHERE list_id = l.id), l.created_at)
+        ) AS updated_at
+     FROM pantry_lists l
+     JOIN list_collaborators lc ON l.id = lc.list_id
+     LEFT JOIN items i ON l.id = i.list_id AND i.deleted = 0
+     WHERE lc.user_id = ?
+     GROUP BY l.id
+     ORDER BY updated_at DESC`, 
+    [userId]
   );
   return rows;
 }
 
-module.exports = { createList, addCollaborator, isCollaborator, getListsByUser };
+async function updateList(id, name) {
+  const [res] = await pool.query('UPDATE pantry_lists SET name = ? WHERE id = ?', [name, id]);
+  return res.affectedRows > 0;
+}
+
+async function deleteList(id) {
+  await pool.query('DELETE FROM list_collaborators WHERE list_id = ?', [id]);
+  await pool.query('DELETE FROM items WHERE list_id = ?', [id]);
+  const [res] = await pool.query('DELETE FROM pantry_lists WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+}
+
+module.exports = { 
+  createList, 
+  addCollaborator, 
+  isCollaborator, 
+  getListsByUser, 
+  updateList, 
+  deleteList 
+};
