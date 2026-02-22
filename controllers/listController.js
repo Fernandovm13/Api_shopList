@@ -94,6 +94,28 @@ async function updateItem(req, res) {
   }
 }
 
+async function getPendingInvitations(req, res) {
+  try {
+    const invitations = await listRepo.getPendingInvitations(req.params.userId);
+    res.json(invitations);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+async function respondToInvitation(req, res) {
+  const { listId, userId, accept } = req.body;
+  if (!listId || !userId || accept === undefined) {
+    return res.status(400).json({ error: "Faltan datos requeridos (listId, userId, accept)" });
+  }
+  try {
+    await listRepo.respondToInvitation(listId, userId, accept);
+    res.json({ message: accept ? "Invitación aceptada" : "Invitación rechazada" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 module.exports = { 
   getUserLists, 
   createList, 
@@ -102,5 +124,7 @@ module.exports = {
   addItem, 
   updateList, 
   deleteList, 
-  updateItem 
+  updateItem,
+  getPendingInvitations, 
+  respondToInvitation    
 };

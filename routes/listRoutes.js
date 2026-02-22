@@ -12,4 +12,7 @@ router.get('/lists/:id/items', listController.getItems);
 router.post('/lists/:id/items', listController.addItem);
 router.put('/items/:id', listController.updateItem);    
 
+router.get('/invitations/:userId', listController.getPendingInvitations);
+router.post('/invitations/respond', listController.respondToInvitation);
+
 module.exports = router;
