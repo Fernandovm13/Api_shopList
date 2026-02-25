@@ -6,4 +6,8 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/reset-password', authController.resetPassword);
 
+router.get('/profile/:id', authController.getProfile);
+router.put('/profile/:id', authController.updateProfile);
+router.delete('/profile/:id', authController.deleteAccount);
+
 module.exports = router;

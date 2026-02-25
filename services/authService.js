@@ -16,15 +16,28 @@ async function login({ email, password }) {
     throw new Error('invalid_credentials');
   }
   const token = jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '4h' });
-  return { token, user: { id: user.id, display_name: user.display_name } };
+  return { token, user: { id: user.id, display_name: user.display_name, avatar_url: user.avatar_url } };
 }
 
 async function resetPassword({ email, newPassword }) {
   const user = await userRepo.findByEmail(email);
   if (!user) throw new Error('user_not_found');
-
   const hash = await bcrypt.hash(newPassword, 10);
   return await userRepo.updatePassword(email, hash);
+}
+
+async function getProfile(id) {
+  const user = await userRepo.findById(id);
+  if (!user) throw new Error('user_not_found');
+  return user;
+}
+
+async function updateProfile(id, data) {
+  return await userRepo.updateProfile(id, data);
+}
+
+async function deleteAccount(id) {
+  return await userRepo.deleteUser(id);
 }
 
 function verifyToken(token) {
@@ -35,5 +48,8 @@ module.exports = {
   register, 
   login, 
   verifyToken, 
-  resetPassword 
+  resetPassword,
+  getProfile,
+  updateProfile,
+  deleteAccount
 };
